@@ -23,6 +23,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
    const database = client.db('scholars');
    const userOperator = database.collection('userOperator');
+   const scholarshipData=database.collection('scholarshipData');
 
   app.get('/userOperator',async(req,res)=>{
     const mail = req.query.email;
@@ -40,6 +41,18 @@ async function run() {
     }else{
       res.send(container.operator)
     }
+  })
+  // add scholarship Data
+  app.post('/scholarshipData',async (req,res)=>{
+    const allData = req.body;
+    const docs={};
+    Object.keys(allData).forEach(value=>{
+      docs[value] = allData[value]
+    })
+
+    const result = await scholarshipData.insertOne(docs);
+
+    res.status(200).send(result);
   })
   } finally {
     // Ensures that the client will close when you finish/error
