@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const cors= require('cors');
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.sqywi72.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 const port= 5000;
 
@@ -53,6 +53,40 @@ async function run() {
     const result = await scholarshipData.insertOne(docs);
 
     res.status(200).send(result);
+  })
+  // get scholarship Data
+  app.get('/getScholarData',async (req,res)=>{
+    const containerData = scholarshipData.find();
+    const result = await containerData.toArray();
+
+    res.send(result);
+  })
+  // specificData for editing
+  app.get('/specificId',async(req,res)=>{
+    const id = req.query.editId;
+    const query = {_id: new ObjectId(`${id}`)};
+    const result = await scholarshipData.findOne(query);
+
+    res.send(result)
+  })
+  // edit specific id data
+
+  app.post('/editData',async (req,res)=>{
+    const id = req.query.editId;
+    const info = req.body;
+    const filter= {_id : new ObjectId(`${id}`)};
+
+    const updateDoc = {
+      $set:{}
+    }
+
+    Object.keys(info).forEach((value)=>{
+      updateDoc.$set[value] = info[value]
+    })
+
+    const result = await scholarshipData.updateOne(filter,updateDoc);
+
+    res.status(200).send(result)
   })
   } finally {
     // Ensures that the client will close when you finish/error
