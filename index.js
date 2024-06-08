@@ -27,9 +27,11 @@ async function run() {
 
   app.get('/userOperator',async(req,res)=>{
     const mail = req.query.email;
+    const name = req.query.name;
     const matchMail = {gmail:mail};
     const docs = {
       gmail: mail,
+      name : name,
       operator: 'user'
     }
     const container = await userOperator.findOne(matchMail); 
@@ -71,7 +73,7 @@ async function run() {
   })
   // edit specific id data
 
-  app.post('/editData',async (req,res)=>{
+  app.put('/editData',async (req,res)=>{
     const id = req.query.editId;
     const info = req.body;
     const filter= {_id : new ObjectId(`${id}`)};
@@ -87,6 +89,36 @@ async function run() {
     const result = await scholarshipData.updateOne(filter,updateDoc);
 
     res.status(200).send(result)
+  })
+  // retrieve all user
+  app.get('/getAllUser',async (req,res)=>{
+    const result = await userOperator.find().toArray();
+
+    res.send(result)
+  })
+  // updateOperator
+  app.put('/updateOperator',async (req,res)=>{
+    const operatorId = req.body.id;
+    const updateAuthor= req.body.author;
+    const filter = {_id: new ObjectId(`${operatorId}`)};
+    const docs ={
+      $set:{
+        operator: updateAuthor
+      }
+    }
+
+    const result = await userOperator.updateOne(filter,docs)
+
+    res.send(result)
+  })
+  // remove user
+  app.delete('/removeUser',async(req,res)=>{
+    const userId = req.query.userId;
+    const filter = {_id: new ObjectId(`${userId}`)};
+
+    const result = await userOperator.deleteOne(filter);
+
+    res.send(result);
   })
   } finally {
     // Ensures that the client will close when you finish/error
