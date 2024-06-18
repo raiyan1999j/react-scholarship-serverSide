@@ -120,6 +120,28 @@ async function run() {
 
     res.send(result);
   })
+  // get latest post
+  app.get('/latestData', async (req,res)=>{
+    const result = await scholarshipData.find().limit(6).toArray();
+
+    res.send(result);
+  })
+  // get all scholarship data
+  app.get('/allScholarData', async (req,res)=>{
+    const pageNumber = parseInt(req.query.pageNumber) || 1;
+    const limitation = parseInt(req.query.limitation) || 4;
+    const countDocs = await scholarshipData.countDocuments();
+    const totalPage = Math.ceil(countDocs/limitation);
+
+    const scholarData = scholarshipData.find().skip((pageNumber - 1) * limitation).limit(limitation);
+    const result = await scholarData.toArray();
+    const wrap ={
+      result,
+      totalPage
+    }
+
+    res.send(wrap);
+  })
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
