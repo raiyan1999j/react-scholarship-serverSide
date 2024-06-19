@@ -130,10 +130,19 @@ async function run() {
   app.get('/allScholarData', async (req,res)=>{
     const pageNumber = parseInt(req.query.pageNumber) || 1;
     const limitation = parseInt(req.query.limitation) || 4;
-    const countDocs = await scholarshipData.countDocuments();
+    const searchItem = req.query.searchItem || "";
+    
+    const searchCategory = {
+      $or:[
+        {scholarshipName:{$regex:searchItem,$options:'i'}},
+        {university:{$regex:searchItem,$options:'i'}},
+        {diploma:{$regex:searchItem,$options:'i'}}
+      ]
+    }
+    const countDocs = await scholarshipData.countDocuments(searchCategory);
     const totalPage = Math.ceil(countDocs/limitation);
 
-    const scholarData = scholarshipData.find().skip((pageNumber - 1) * limitation).limit(limitation);
+    const scholarData = scholarshipData.find(searchCategory).skip((pageNumber - 1) * limitation).limit(limitation);
     const result = await scholarData.toArray();
     const wrap ={
       result,
