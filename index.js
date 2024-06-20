@@ -58,10 +58,32 @@ async function run() {
   })
   // get scholarship Data
   app.get('/getScholarData',async (req,res)=>{
-    const containerData = scholarshipData.find();
-    const result = await containerData.toArray();
+    const pageNumber = parseInt(req.query.pageNumber) || 1;
+    const limitation = parseInt(req.query.limitation) || 8;
+    const searchItem = req.query.searchItem || "";
 
-    res.send(result);
+    const searchCategory = {
+      $or:[
+        {university:{$regex:searchItem,$options:'i'}}
+      ]
+    }
+
+    const countDocs = await scholarshipData.countDocuments(searchCategory);
+    const totalPage = Math.ceil(countDocs/limitation);
+
+    const scholarData = scholarshipData.find(searchCategory).skip((pageNumber - 1)* limitation).limit(limitation);
+    const result = await scholarData.toArray();
+
+    const wrap = {
+      result,
+      totalPage
+    }
+
+    res.send(wrap)
+    // const containerData = scholarshipData.find();
+    // const result = await containerData.toArray();
+
+    // res.send(result);
   })
   // specificData for editing
   app.get('/specificId',async(req,res)=>{
@@ -72,11 +94,11 @@ async function run() {
     res.send(result)
   })
   // edit specific id data
-
   app.put('/editData',async (req,res)=>{
     const id = req.query.editId;
     const info = req.body;
     const filter= {_id : new ObjectId(`${id}`)};
+    const option= {upsert: true}
 
     const updateDoc = {
       $set:{}
@@ -86,7 +108,7 @@ async function run() {
       updateDoc.$set[value] = info[value]
     })
 
-    const result = await scholarshipData.updateOne(filter,updateDoc);
+    const result = await scholarshipData.updateOne(filter,updateDoc,option);
 
     res.status(200).send(result)
   })
@@ -150,6 +172,14 @@ async function run() {
     }
 
     res.send(wrap);
+  })
+  // get specific scholarship item for details page
+  app.get('/details/:id', async (req,res)=>{
+    const id = req.params.id;
+    const query = {_id: new ObjectId(`${id}`)};
+    const result= await scholarshipData.findOne(query);
+
+    res.send(result)
   })
   } finally {
     // Ensures that the client will close when you finish/error
