@@ -24,6 +24,7 @@ async function run() {
    const database = client.db('scholars');
    const userOperator = database.collection('userOperator');
    const scholarshipData=database.collection('scholarshipData');
+   const application = database.collection('application');
 
   app.get('/userOperator',async(req,res)=>{
     const mail = req.query.email;
@@ -193,6 +194,14 @@ async function run() {
     const result = await scholarshipData.find(query,option).toArray();
 
     res.send(result)
+  })
+  // post all application
+  app.post('/application',async(req,res)=>{
+    const body = req.body;
+
+    const result = await application.insertOne(body);
+
+    res.send().status(200);
   })
   } finally {
     // Ensures that the client will close when you finish/error
