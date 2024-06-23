@@ -173,11 +173,24 @@ async function run() {
 
     res.send(wrap);
   })
-  // get specific scholarship item for details page
+  // get specific scholarship item for details page & payment page
   app.get('/details/:id', async (req,res)=>{
     const id = req.params.id;
     const query = {_id: new ObjectId(`${id}`)};
     const result= await scholarshipData.findOne(query);
+
+    res.send(result)
+  })
+  // get university all degree category
+  app.get('/universityDegree',async (req,res)=>{
+    const institute = req.query.institute;
+    const query = {university:institute};
+
+    const option = {
+      projection:{diploma:1,_id:0}
+    }
+
+    const result = await scholarshipData.find(query,option).toArray();
 
     res.send(result)
   })
