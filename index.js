@@ -235,6 +235,73 @@ async function run() {
 
       res.send().status(200);
     })
+    // check if already commented or not
+    app.get('/checkExistence',async (req,res)=>{
+      const trackEmail = req.query.trackEmail;
+      const trackId = req.query.trackId;
+      const query = {$and:[{email:trackEmail},{university_id:trackId}] }
+
+      const result = await review.findOne(query);
+
+      if(result == null){
+        res.send(false);
+      }else{
+        res.send(true)
+      }
+    })
+    // collect rating point for specific university
+    app.get('/ratingCollector',async (req,res)=>{
+      const university = req.query.university;
+      const query = {university};
+      const option={
+        projection:{rating:1,_id:0}
+      }
+
+      const ratingPoint = await review.find(query,option).toArray();
+
+      res.send(ratingPoint)
+    })
+    // get user based review
+    app.get('/specificReview',async (req,res)=>{
+      const mail = req.query.email;
+      const query={email:mail};
+      const result= await review.find(query).toArray();
+
+      res.send(result);
+    })
+    // update review 
+    app.put('/reviewUpdate', async (req,res)=>{
+      const trackId = req.query.track;
+      const data = req.body;
+      const filter={_id:new ObjectId(`${trackId}`)};
+      const updateDoc = {
+        $set:{}
+      }
+
+      Object.keys(data).forEach((value)=>{
+        updateDoc.$set[value] = data[`${value}`];
+      })
+
+      const result = await review.updateOne(filter,updateDoc);
+
+      res.send().status(200);
+      console.log(data)
+
+    })
+    // university based comment
+    app.get('/universityBaseCom',async (req,res)=>{
+      const university = req.query.university;
+      const query = {university};
+      const result= await review.find(query).toArray();
+
+      res.send(result);
+    })
+    // retrieve all user review
+    app.get('/reviewData', async (req,res)=>{
+      const result = await review.find().toArray();
+
+      res.send(result);
+    })
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
