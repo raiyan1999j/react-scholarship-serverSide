@@ -26,6 +26,7 @@ async function run() {
     const scholarshipData = database.collection("scholarshipData");
     const application = database.collection("application");
     const review = database.collection('review');
+    const paymentInfo = database.collection('paymentInfo');
 
     app.get("/userOperator", async (req, res) => {
       const mail = req.query.email;
@@ -83,10 +84,6 @@ async function run() {
       };
 
       res.send(wrap);
-      // const containerData = scholarshipData.find();
-      // const result = await containerData.toArray();
-
-      // res.send(result);
     });
     // specificData for editing
     app.get("/specificId", async (req, res) => {
@@ -301,6 +298,26 @@ async function run() {
       const result = await review.find().toArray();
 
       res.send(result);
+    })
+    // user paymentData
+    app.post('/paymentData',async (req,res)=>{
+      const data = req.body;
+      const result = await paymentInfo.insertOne(data);
+
+      res.send().status(200);
+    })
+    // check whether already paid
+    app.get('/paymentCheck',async (req,res)=>{
+      const email = req.query.email;
+      const track = req.query.track;
+      const query = {$and:[{email},{track}]}
+      const result= await paymentInfo.findOne(query);
+
+      if(result == null){
+        res.send(true)
+      }else{
+        res.send(false)
+      }
     })
   } finally {
     // Ensures that the client will close when you finish/error
