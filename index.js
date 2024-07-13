@@ -144,9 +144,15 @@ async function run() {
     });
     // get latest post
     app.get("/latestData", async (req, res) => {
-      const result = await scholarshipData.find().limit(6).toArray();
+      const allData = await scholarshipData.find().toArray();
+      let requirement;
 
-      res.send(result);
+      allData.sort((a,b)=>{return new Date(a.postDate) - new Date(b.postDate)});
+      allData.sort((a,b)=>{return parseInt(a.application) - parseInt(b.application)});
+
+      requirement = allData.slice(0,6)
+
+      res.send(requirement);
     });
     // get all scholarship data
     app.get("/allScholarData", async (req, res) => {
@@ -312,6 +318,19 @@ async function run() {
       const track = req.query.track;
       const query = {$and:[{email},{track}]}
       const result= await paymentInfo.findOne(query);
+
+      if(result == null){
+        res.send(true)
+      }else{
+        res.send(false)
+      }
+    })
+    // check already applied or not
+    app.get('/appCheck',async (req,res)=>{
+      const email = req.query.email;
+      const track = req.query.track;
+      const query = {$and:[{user_email:email},{scholarship_id:track}]};
+      const result= await application.findOne(query);
 
       if(result == null){
         res.send(true)
