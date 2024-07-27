@@ -1,13 +1,20 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const cookieParser = require('cookie-parser');
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.sqywi72.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const secretKey = process.env.SECRET_KEY;
+const jwt = require('jsonwebtoken')
 const port = 5000;
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin:["http://localhost:5173"],
+  credentials:true
+}));
+app.use(cookieParser());
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -28,25 +35,62 @@ async function run() {
     const review = database.collection('review');
     const paymentInfo = database.collection('paymentInfo');
 
-    app.get("/userOperator", async (req, res) => {
+    // create token
+    app.post('/createToken',async (req,res)=>{
+      const email = req.body.email;
+      const token = jwt.sign({email},secretKey,{expiresIn:'30m'});
+
+      res.cookie("secret",token,{
+        httpOnly: true,
+        secure: false,
+      }).send({success:true});
+    })
+    // verify token
+    const verifyToken=(req,res,next)=>{
+      const token = req.cookies.secret;
+
+      if(token){
+        jwt.verify(token,secretKey,(err,user)=>{
+          if(err){
+            res.status(401).send("unauthorized")
+          }else{
+            req.user = user;
+            next()
+          }
+        })
+      }else{
+        res.status(401).send("unauthorized")
+      }
+    }
+    // create operator
+    app.post("/userOperator", async (req,res)=>{
       const mail = req.query.email;
       const name = req.query.name;
-      const matchMail = { gmail: mail };
       const docs = {
         gmail: mail,
         name: name,
-        operator: "user",
-      };
+        operator: "user"
+      }
+      const result = userOperator.insertOne(docs);
+
+      res.send().status(200);
+    })
+    // retrieve all operator
+    app.get("/operatorFinder", async (req,res)=>{
+      const mail = req.query.email;
+      const matchMail = {gmail : mail};
       const container = await userOperator.findOne(matchMail);
 
-      if (!container) {
-        await userOperator.insertOne(docs);
-        const result = await userOperator.findOne(matchMail);
-        res.send(result.operator);
-      } else {
-        res.send(container.operator);
-      }
-    });
+      res.send(container?.operator)
+    })
+    // login user info
+    app.get("/loginUserInfo", async (req,res)=>{
+      const mail = req.query.email;
+      const matchMail = {gmail : mail}
+      const result = await userOperator.findOne(matchMail);
+
+      res.send(result.operator);
+    })
     // add scholarship Data
     app.post("/scholarshipData", async (req, res) => {
       const allData = req.body;
@@ -212,13 +256,17 @@ async function run() {
       res.send().status(200);
     });
     // get specific user application
-    app.get("/userApplied/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { user_email: email };
+    app.get("/userApplied/:email",verifyToken, async (req, res) => {
+      const user = req.user.email;
+      const email= req.params.email;
+      const query= {user_email: email};
 
-      const result = await application.find(query).toArray();
-
-      res.send(result);
+      if(user == email){
+        const result = await application.find(query).toArray();
+        res.send(result);
+      }else{
+        res.status(400).send('bad request')
+      }
     });
     // get data for review feature
     app.get("/additionalData", async (req, res) => {
