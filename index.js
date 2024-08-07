@@ -34,6 +34,7 @@ async function run() {
     const application = database.collection("application");
     const review = database.collection('review');
     const paymentInfo = database.collection('paymentInfo');
+    const workStatus = database.collection('workStatus');
 
     // create token
     app.post('/createToken',async (req,res)=>{
@@ -385,6 +386,41 @@ async function run() {
       }else{
         res.send(false)
       }
+    })
+    // applicant info
+    app.get('/applicantInfo', async (req,res)=>{
+      const container = await application.find().toArray();
+
+      res.send(container);
+    })
+    // get specific applicant info
+    app.get('/specificApplicant',async (req,res)=>{
+      const id = req.query.trackId;
+      const query = {_id: new ObjectId(`${id}`)};
+      const result= await application.findOne(query);
+
+      res.send(result)
+    })
+    // manage applied application
+    app.post('/workStatus',async (req,res)=>{
+      const trackId = req.query.userId;
+      const info = req.body;
+      const existence = {userId: trackId};
+      const container = await workStatus.findOne(existence);
+      const option = {upsert: true};
+      const updateDoc = {$set:{}}
+      let result;
+
+      if(container){
+        Object.keys(info).map((value)=>{
+          updateDoc.$set[`${value}`] = info[`${value}`]
+        })
+
+        result = await workStatus.updateOne(existence,updateDoc,option)
+      }else{
+        result = await workStatus.insertOne(info)
+      }
+
     })
   } finally {
     // Ensures that the client will close when you finish/error
