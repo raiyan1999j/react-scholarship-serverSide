@@ -34,6 +34,7 @@ async function run() {
     const application = database.collection("application");
     const review = database.collection('review');
     const paymentInfo = database.collection('paymentInfo');
+    const notification= database.collection('notification');
 
     // create token
     app.post('/createToken',async (req,res)=>{
@@ -413,7 +414,27 @@ async function run() {
       })
 
       result = await application.updateOne(filter,updateDoc);
-      
+      res.send().status(200)
+    })
+    // notification send for any changes
+    app.post('/manageAppNotification',async (req,res)=>{
+      const container = req.body;
+      const result = await notification.insertOne(container);
+    })
+    // get notification 
+    app.get('/getNotification',async (req,res)=>{
+      const query = {user: req.query.email};
+      const result = await notification.find(query).toArray();
+
+      res.send(result)
+    })
+    // remove notification;
+    app.delete('/removeNotification',async (req,res)=>{
+      const trackId = req.query.userId;
+      const filter = {_id: new ObjectId(`${trackId}`)};
+      const result = await notification.deleteOne(filter);
+
+      res.send().status(200)
     })
   } finally {
     // Ensures that the client will close when you finish/error
