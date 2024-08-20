@@ -337,8 +337,6 @@ async function run() {
       const result = await review.updateOne(filter,updateDoc);
 
       res.send().status(200);
-      console.log(data)
-
     })
     // university based comment
     app.get('/universityBaseCom',async (req,res)=>{
@@ -407,19 +405,22 @@ async function run() {
       const updateValue = req.body;
       const filter = {_id: new ObjectId(`${userId}`)};
       const updateDoc={$set:{}};
+      const option = {upsert : true}
       let result;
 
       Object.keys(updateValue).map((value)=>{
         updateDoc.$set[`${value}`] = updateValue[`${value}`]
       })
 
-      result = await application.updateOne(filter,updateDoc);
+      result = await application.updateOne(filter,updateDoc,option);
       res.send().status(200)
     })
     // notification send for any changes
     app.post('/manageAppNotification',async (req,res)=>{
       const container = req.body;
       const result = await notification.insertOne(container);
+
+      res.send().status(200)
     })
     // get notification 
     app.get('/getNotification',async (req,res)=>{
@@ -433,6 +434,45 @@ async function run() {
       const trackId = req.query.userId;
       const filter = {_id: new ObjectId(`${trackId}`)};
       const result = await notification.deleteOne(filter);
+      const allNotification = await notification.find().toArray();
+
+      res.send(allNotification).status(200)
+    })
+    // envelope open or close
+    app.put('/envelopeCondition',async (req,res)=>{
+      const userId = req.query.userId;
+      const condition= req.body.condition;
+      const filter = {_id: new ObjectId(`${userId}`)};
+      const updateDoc = {
+        $set:{
+          envelope: condition
+        }
+      }
+
+      const result = await application.updateOne(filter,updateDoc);
+
+      res.send().status(200)
+    })
+    // my application edit data id base
+    app.get('/myApplicationEditData', async(req,res)=>{
+      const trackId = req.query.trackId;
+      const query = {scholarship_id: trackId};
+      const result = await application.findOne(query);
+
+      res.send(result);
+    })
+    // update applicant data by user
+    app.put('/updateApplicantData',async (req,res)=>{
+      const trackId = req.query.trackId;
+      const data = req.body;
+      const filter = {scholarship_id:`${trackId}`};
+      const updateDoc={$set:{}}
+
+      Object.keys(data).map((value)=>{
+        updateDoc.$set[value] = data[`${value}`]
+      })
+
+      const result = await application.updateOne(filter,updateDoc);
 
       res.send().status(200)
     })
