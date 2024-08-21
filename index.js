@@ -487,6 +487,14 @@ async function run() {
       
       res.send().status(200)
     })
+    // remove scholarship data by admin or moderator
+    app.delete('/removeScholarshipData', async (req,res)=>{
+      const trackId = req.query.trackId;
+      const query = {_id: new ObjectId(`${trackId}`)};
+      const result= await scholarshipData.deleteOne(query);
+
+      res.send().status(200);
+    })
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
