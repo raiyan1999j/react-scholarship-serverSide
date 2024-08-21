@@ -476,6 +476,17 @@ async function run() {
 
       res.send().status(200)
     })
+    // user cancel application,remove application
+    app.delete('/userApplicationRemoved',async (req,res)=>{
+      const trackId = req.query.trackingId;
+      const query = {scholarship_id : `${trackId}`};
+      const payment={track : `${trackId}`};
+
+      const paymentRemove= await paymentInfo.deleteOne(payment);
+      const result= await application.deleteOne(query);
+      
+      res.send().status(200)
+    })
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
