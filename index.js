@@ -274,7 +274,7 @@ async function run() {
       const tracking = req.query.trackingId;
       const query = { _id: new ObjectId(`${tracking}`) };
       const option = {
-        projection: { _id: 1, scholarshipName: 1, university: 1 },
+        projection: { _id: 1, scholarshipName: 1, university: 1, subject: 1 },
       };
       const result = await scholarshipData.findOne(query, option);
 
@@ -494,6 +494,20 @@ async function run() {
       const result= await scholarshipData.deleteOne(query);
 
       res.send().status(200);
+    })
+    // retrieve all user review
+    app.get('/allUserReview',async (req,res)=>{
+      const result = await review.find().toArray();
+
+      res.send(result);
+    })
+    // user review remove
+    app.delete('/reviewRemove',async (req,res)=>{
+      const trackId = req.query.trackId;
+      const query = {_id : new ObjectId(`${trackId}`)};
+      const result = await review.deleteOne(query);
+
+      res.send().status(200)
     })
   } finally {
     // Ensures that the client will close when you finish/error
