@@ -6,7 +6,8 @@ require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.sqywi72.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 const secretKey = process.env.SECRET_KEY;
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(`${process.env.STRIPE_KEY}`)
 const port = 5000;
 
 app.use(express.json());
@@ -361,8 +362,7 @@ async function run() {
     })
     // check whether already paid
     app.get('/paymentCheck',async (req,res)=>{
-      const email = req.query.email;
-      const track = req.query.track;
+      const {email,track} = req.query;
       const query = {$and:[{email},{track}]}
       const result= await paymentInfo.findOne(query);
 
@@ -508,6 +508,27 @@ async function run() {
       const result = await review.deleteOne(query);
 
       res.send().status(200)
+    })
+    // payment api
+    app.post('/clientPayment',async (req,res)=>{
+      const {amount,id} = req.body;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+          amount : amount * 100,
+          currency: 'bdt',
+          automatic_payment_methods: {
+            enabled: true,
+          }
+      })
+      res.send({clientSecret: paymentIntent.client_secret})
+    })
+    // get specific application
+    app.get("/particularApplication",async (req,res)=>{
+      const {trackId} = req.query;
+      const query = {_id: new ObjectId(`${trackId}`)};
+      const result= await scholarshipData.findOne(query);
+
+      res.send(result);
     })
   } finally {
     // Ensures that the client will close when you finish/error
