@@ -8,11 +8,11 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const secretKey = process.env.SECRET_KEY;
 const jwt = require('jsonwebtoken');
 const stripe = require('stripe')(`${process.env.STRIPE_KEY}`)
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 app.use(express.json());
 app.use(cors({
-  origin:["http://localhost:5173"],
+  origin:["http://localhost:5173","http://localhost:5174","https://assignment-12-fc3fb.web.app"],
   credentials:true
 }));
 app.use(cookieParser());
@@ -36,6 +36,7 @@ async function run() {
     const review = database.collection('review');
     const paymentInfo = database.collection('paymentInfo');
     const notification= database.collection('notification');
+    const userMessage= database.collection('userMessage');
 
     // create token
     app.post('/createToken',async (req,res)=>{
@@ -44,7 +45,8 @@ async function run() {
 
       res.cookie("secret",token,{
         httpOnly: true,
-        secure: false,
+        secure: true,
+        // sameSite:"None"
       }).send({success:true});
     })
     // verify token
@@ -529,6 +531,13 @@ async function run() {
       const result= await scholarshipData.findOne(query);
 
       res.send(result);
+    })
+    // user send message
+    app.post("/userMessage",async (req,res)=>{
+      const message = req.body;
+      const result = await userMessage.insertOne(message);
+
+      res.send().status(200)
     })
   } finally {
     // Ensures that the client will close when you finish/error
